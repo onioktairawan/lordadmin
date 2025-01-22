@@ -35,27 +35,7 @@ def admin_required(func):
         return await func(update, context, *args, **kwargs)
     return wrapper
 
-# Fungsi untuk menyambut anggota baru
-async def welcome_new_member(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    welcome_image_url = "https://i.pinimg.com/236x/1f/c8/24/1fc8244a27f7665e2d694a44665a4d83.jpg"
-    welcome_text = "Selamat datang di grup, {}! 😊 Jangan lupa baca aturan grup dan jadikan tempat ini menyenangkan untuk semua!"
-    
-    for member in update.message.new_chat_members:
-        await update.message.reply_photo(welcome_image_url, caption=welcome_text.format(member.first_name))
-
-# Fungsi untuk menangani perintah /start
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Halo! Saya adalah bot pengelola grup Anda. Ketik /help untuk melihat daftar perintah.")
-
-# Fungsi untuk menangani perintah /help
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Daftar Perintah:\n/start - Memulai bot\n/help - Melihat bantuan\n/rules - Menampilkan aturan grup\n/report - Melaporkan masalah ke admin\n/warn - Memberikan peringatan ke anggota\n/mute - Membisukan anggota\n/kick - Mengeluarkan anggota")
-
-# Fungsi untuk menampilkan aturan grup
-async def rules(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Aturan Grup:\n1. Hormati sesama anggota.\n2. Jangan spam.\n3. Ikuti arahan admin.")
-
-# Fungsi untuk mendapatkan pengguna dari pesan atau username/id
+# Fungsi untuk mendapatkan ID dan username pengguna
 async def get_user_from_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Jika ada balasan pesan
     if update.message.reply_to_message:
@@ -63,22 +43,21 @@ async def get_user_from_message(update: Update, context: ContextTypes.DEFAULT_TY
 
     # Jika ada username yang diberikan dalam perintah
     if len(update.message.text.split()) > 1:
-        # Cek apakah itu username dengan '@' atau ID numerik
         target = update.message.text.split()[1]
-
+        
         if target.startswith('@'):
-            username = target.lstrip('@')  # Menghapus '@' jika ada
+            # Mengambil username tanpa '@'
+            username = target.lstrip('@')
             try:
-                # Coba mendapatkan informasi anggota berdasarkan username
+                # Coba ambil user berdasarkan username
                 user = await context.bot.get_chat_member(update.message.chat_id, username)
                 return user.user
             except:
-                # Jika tidak bisa mendapatkan username, kirimkan pesan error
                 await update.message.reply_text(f"Pengguna dengan username @{username} tidak ditemukan.")
                 return None
         else:
-            # Jika itu ID numerik, coba cari pengguna berdasarkan ID
             try:
+                # Jika itu ID numerik, coba cari berdasarkan ID
                 user = await context.bot.get_chat_member(update.message.chat_id, int(target))
                 return user.user
             except:
@@ -87,48 +66,68 @@ async def get_user_from_message(update: Update, context: ContextTypes.DEFAULT_TY
 
     return None  # Jika tidak ada username atau ID yang diberikan
 
+# Fungsi untuk menyambut anggota baru
+async def welcome_new_member(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    for member in update.message.new_chat_members:
+        name = member.first_name
+        username = member.username if member.username else "Tidak ada username"
+        user_id = member.id
+        await update.message.reply_text(f"Selamat datang {name} (@{username}) dengan ID {user_id}!")
+
 # Fungsi untuk memberikan peringatan
 @admin_required
 async def warn(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = await get_user_from_message(update, context)
-    if user:
-        await update.message.reply_text(f"{user.first_name} telah diberi peringatan.")
-        await notify_admins(update, context, "Memberi peringatan", user.first_name)
+    target_user = await get_user_from_message(update, context)
+    if not target_user:
+        return
+
+    warned_user = target_user
+    await update.message.reply_text(f"{warned_user.first_name} telah diberi peringatan.")
+    await notify_admins(update, context, "Memberi peringatan", warned_user.first_name)
 
 # Fungsi untuk membisukan anggota
 @admin_required
 async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = await get_user_from_message(update, context)
-    if user:
-        await context.bot.restrict_chat_member(
-            update.message.chat_id,
-            user.id,
-            permissions=ChatPermissions(can_send_messages=False)
-        )
-        await update.message.reply_text(f"{user.first_name} telah dibisukan.")
-        await notify_admins(update, context, "Membisukan", user.first_name)
+    target_user = await get_user_from_message(update, context)
+    if not target_user:
+        return
+
+    muted_user = target_user
+    await context.bot.restrict_chat_member(
+        update.message.chat_id,
+        muted_user.id,
+        permissions=ChatPermissions(can_send_messages=False)
+    )
+    await update.message.reply_text(f"{muted_user.first_name} telah dibisukan.")
+    await notify_admins(update, context, "Membisukan", muted_user.first_name)
 
 # Fungsi untuk mengeluarkan anggota
 @admin_required
 async def kick(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = await get_user_from_message(update, context)
-    if user:
-        await context.bot.ban_chat_member(update.message.chat_id, user.id)
-        await update.message.reply_text(f"{user.first_name} telah dikeluarkan dari grup.")
-        await notify_admins(update, context, "Mengeluarkan", user.first_name)
+    target_user = await get_user_from_message(update, context)
+    if not target_user:
+        return
+
+    kicked_user = target_user
+    await context.bot.ban_chat_member(update.message.chat_id, kicked_user.id)
+    await update.message.reply_text(f"{kicked_user.first_name} telah dikeluarkan dari grup.")
+    await notify_admins(update, context, "Mengeluarkan", kicked_user.first_name)
 
 # Fungsi untuk unmute anggota
 @admin_required
 async def unmute(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = await get_user_from_message(update, context)
-    if user:
-        await context.bot.restrict_chat_member(
-            update.message.chat_id,
-            user.id,
-            permissions=ChatPermissions(can_send_messages=True)
-        )
-        await update.message.reply_text(f"{user.first_name} telah diunmute.")
-        await notify_admins(update, context, "Unmute", user.first_name)
+    target_user = await get_user_from_message(update, context)
+    if not target_user:
+        return
+
+    unmuted_user = target_user
+    await context.bot.restrict_chat_member(
+        update.message.chat_id,
+        unmuted_user.id,
+        permissions=ChatPermissions(can_send_messages=True)
+    )
+    await update.message.reply_text(f"{unmuted_user.first_name} telah diunmute.")
+    await notify_admins(update, context, "Unmute", unmuted_user.first_name)
 
 # Fungsi untuk memberi pemberitahuan kepada admin saat peringatan/mute/kick
 async def notify_admins(update: Update, context: ContextTypes.DEFAULT_TYPE, action: str, target_user: str):
@@ -159,14 +158,17 @@ async def info(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global status_bot
     await update.message.reply_text(f"Bot Status: {status_bot}")
 
+# Fungsi untuk menangani event bot disconnect
+async def handle_disconnect(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global status_bot
+    status_bot = "Disconnected"
+    logger.error("Bot status updated to Disconnected.")
+
 # Fungsi utama untuk menjalankan bot
 def main():
     application = Application.builder().token(BOT_TOKEN).build()
 
     application.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome_new_member))
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("help", help_command))
-    application.add_handler(CommandHandler("rules", rules))
     application.add_handler(CommandHandler("warn", warn))
     application.add_handler(CommandHandler("mute", mute))
     application.add_handler(CommandHandler("kick", kick))
@@ -174,6 +176,10 @@ def main():
     application.add_handler(CommandHandler("report", report))
     application.add_handler(CommandHandler("info", info))  # Menambahkan perintah /info
     application.add_handler(MessageHandler(filters.COMMAND, unknown_command))
+
+    # Misalnya, memanggil handle_disconnect ketika bot terputus (untuk simulasi)
+    # Anda dapat menyesuaikan logika ini tergantung bagaimana Anda mendeteksi disconnect
+    application.add_error_handler(handle_disconnect)
 
     application.run_polling()
 
