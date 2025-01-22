@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 import os
-from telegram import Update, ChatPermissions
+from telegram import Update, ChatPermissions, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes
 from telegram.ext import filters
 from telegram import Bot
@@ -13,7 +13,6 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 # Set up logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # Variabel global untuk menyimpan status bot
 status_bot = "Running"  # Status awal adalah Running
@@ -139,11 +138,19 @@ async def info(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global status_bot
     await update.message.reply_text(f"Bot Status: {status_bot}")
 
-# Fungsi untuk menangani event bot disconnect
-async def handle_disconnect(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    global status_bot
-    status_bot = "Disconnected"
-    logger.error("Bot status updated to Disconnected.")
+# Fungsi untuk menangani perintah /menu
+async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboard = [
+        [KeyboardButton("/start"), KeyboardButton("/help")],
+        [KeyboardButton("/rules"), KeyboardButton("/report")],
+        [KeyboardButton("/warn"), KeyboardButton("/mute")],
+        [KeyboardButton("/kick"), KeyboardButton("/unmute")]
+    ]
+    markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True)
+    await update.message.reply_text("Pilih perintah:", reply_markup=markup)
+
+# Menambahkan perintah /menu
+application.add_handler(CommandHandler("menu", menu))
 
 # Fungsi utama untuk menjalankan bot
 def main():
@@ -159,11 +166,8 @@ def main():
     application.add_handler(CommandHandler("unmute", unmute))
     application.add_handler(CommandHandler("report", report))
     application.add_handler(CommandHandler("info", info))  # Menambahkan perintah /info
+    application.add_handler(CommandHandler("menu", menu))  # Menambahkan perintah /menu
     application.add_handler(MessageHandler(filters.COMMAND, unknown_command))
-
-    # Misalnya, memanggil handle_disconnect ketika bot terputus (untuk simulasi)
-    # Anda dapat menyesuaikan logika ini tergantung bagaimana Anda mendeteksi disconnect
-    application.add_error_handler(handle_disconnect)
 
     application.run_polling()
 
