@@ -126,6 +126,11 @@ async def report(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Fungsi untuk menangani perintah yang tidak dikenal
 async def unknown_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # Cek apakah perintah dimulai dengan nama bot ini
+    if not update.message.text.startswith('/' + context.bot.username):
+        return  # Abaikan perintah yang ditujukan ke bot lain
+
+    # Jika perintah tidak dikenali, balas dengan pesan ini
     await update.message.reply_text("Perintah yang Anda masukkan tidak dikenal. Ketik /help untuk daftar perintah yang tersedia.")
 
 # Fungsi untuk menangani perintah /info
