@@ -1,0 +1,27 @@
+Langkah 1: Buat file Python
+Buat file baru di dalam folder proyek Anda, misalnya telegram_bot.py.
+Salin dan tempelkan kode Python yang saya berikan ke dalam file telegram_bot.py.
+Langkah 2: Buat File .env
+Di dalam folder yang sama dengan telegram_bot.py, buat file baru dengan nama .env.
+Masukkan token bot Anda dalam format berikut:
+makefile
+Copy
+Edit
+BOT_TOKEN=masukan bot anda
+Langkah 3: Instalasi Paket yang Diperlukan
+Pastikan Anda sudah menginstal python-dotenv dan python-telegram-bot jika belum melakukannya. Jalankan perintah berikut di terminal:
+
+bash
+Copy
+Edit
+pip install python-dotenv python-telegram-bot
+Langkah 4: Jalankan Bot
+Setelah Anda memastikan file .env dan telegram_bot.py sudah benar, jalankan bot dengan perintah berikut di terminal:
+
+bash
+Copy
+Edit
+python telegram_bot.py
+Ini akan menjalankan bot Telegram Anda, yang terhubung dengan API Telegram menggunakan token yang disimpan di .env.
+
+Jika ada pertanyaan atau langkah yang perlu penjelasan lebih lanjut, jangan ragu untuk bertanya!
