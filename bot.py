@@ -36,7 +36,7 @@ def admin_required(func):
 
 # Fungsi untuk menyambut anggota baru
 async def welcome_new_member(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    welcome_image_url = "https://i.pinimg.com/236x/df/3d/30/df3d309603c24015cfe0f5cd06ad596f.jpg"
+    welcome_image_url = "https://i.pinimg.com/236x/1f/c8/24/1fc8244a27f7665e2d694a44665a4d83.png"
     welcome_text = "Selamat datang di grup, {}! 😊 Jangan lupa baca aturan grup dan jadikan tempat ini menyenangkan untuk semua!"
     
     for member in update.message.new_chat_members:
