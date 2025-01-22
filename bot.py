@@ -13,6 +13,7 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 # Set up logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Variabel global untuk menyimpan status bot
 status_bot = "Running"  # Status awal adalah Running
@@ -139,10 +140,10 @@ async def info(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"Bot Status: {status_bot}")
 
 # Fungsi untuk menangani event bot disconnect
-async def handle_disconnect():
+async def handle_disconnect(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global status_bot
     status_bot = "Disconnected"
-    print("Bot status updated to Disconnected.")
+    logger.error("Bot status updated to Disconnected.")
 
 # Fungsi utama untuk menjalankan bot
 def main():
