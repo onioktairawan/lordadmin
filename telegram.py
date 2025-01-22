@@ -14,6 +14,9 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 # Set up logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
+# Variabel global untuk menyimpan status bot
+status_bot = "Running"  # Status awal adalah Running
+
 # Fungsi untuk memeriksa apakah pengguna adalah admin
 async def is_admin(update: Update) -> bool:
     chat_id = update.message.chat_id
@@ -125,6 +128,17 @@ async def report(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def unknown_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Perintah yang Anda masukkan tidak dikenal. Ketik /help untuk daftar perintah yang tersedia.")
 
+# Fungsi untuk menangani perintah /info
+async def info(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global status_bot
+    await update.message.reply_text(f"Bot Status: {status_bot}")
+
+# Fungsi untuk menangani event bot disconnect
+async def handle_disconnect():
+    global status_bot
+    status_bot = "Disconnected"
+    print("Bot status updated to Disconnected.")
+
 # Fungsi utama untuk menjalankan bot
 def main():
     application = Application.builder().token(BOT_TOKEN).build()
@@ -138,7 +152,12 @@ def main():
     application.add_handler(CommandHandler("kick", kick))
     application.add_handler(CommandHandler("unmute", unmute))
     application.add_handler(CommandHandler("report", report))
+    application.add_handler(CommandHandler("info", info))  # Menambahkan perintah /info
     application.add_handler(MessageHandler(filters.COMMAND, unknown_command))
+
+    # Misalnya, memanggil handle_disconnect ketika bot terputus (untuk simulasi)
+    # Anda dapat menyesuaikan logika ini tergantung bagaimana Anda mendeteksi disconnect
+    application.add_error_handler(handle_disconnect)
 
     application.run_polling()
 
